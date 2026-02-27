@@ -1,3 +1,5 @@
+//svi imate isto, prilagodite
+
 //1
 SELECT idn, ulica, ul_br FROM nepokretnost WHERE opstina = 'Petrovaradin' ORDER BY kvd ASC;
 
