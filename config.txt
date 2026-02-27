@@ -1,11 +1,29 @@
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
-TEST123
+//1
+SELECT idn, ulica, ul_br FROM nepokretnost WHERE opstina = 'Petrovaradin' ORDER BY kvd ASC;
 
+//2
+SELECT idn, kvd, ulica, ul_br FROM nepokretnost WHERE kvd BETWEEN 50 AND 100;
+
+//3
+ALTER TABLE nepokretnost ADD (datpocizg date, datzavizg date);
+
+//4
+SELECT l.idl, l.imel, l.przl, pk.saldo, CASE WHEN pk.saldo >= 0 THEN 'Nezaduzena' WHEN pk.saldo >= -15000 AND pk.saldo < 0 THEN 'Umereno zaduzena' ELSE 'Zaduzena' END AS kategorija FROM lice l, poreskakartica pk WHERE l.idl = pk.idl;
+
+//5
+SELECT pk.idk, l.imel, l.przl, n.kvd, n.ulica, vn.nazivvn FROM poreskakartica pk, lice l, nepokretnost n, vrstanep vn WHERE pk.idl = l.idl AND n.idl = l.idl AND n.idvn = vn.idvn AND l.vrstal = 'PRAVNO' AND pk.dug > 0;
+
+//6
+SELECT l.idl, l.imel, l.przl FROM lice l WHERE l.idl IN (SELECT n.idl FROM nepokretnost n, vrstanep vn WHERE n.idvn = vn.idvn AND vn.nazivvn = 'Stan') AND l.idl NOT IN (SELECT n.idl FROM nepokretnost n, vrstanep vn WHERE n.idvn = vn.idvn AND vn.nazivvn = 'Kuca');
+
+//7
+SELECT  n.idn, n.kvd, n.ulica, n.ul_br AS broj, v.idvn, v.nazivvn FROM nepokretnost n JOIN vrstanep v ON v.idvn = n.idvn WHERE n.kvd < (SELECT AVG(n2.kvd) FROM nepokretnost n2 WHERE n2.idvn = n.idvn);
+
+//8
+UPDATE poreskakartica SET kamata = kamata * 1.05 WHERE dug > 0;
+
+//9
+SELECT l.imel, l.przl, COUNT(n.idn) AS broj_nepokretnosti, COUNT(DISTINCT n.idvn)  AS broj_razlicitih_vrsta, SUM(n.kvd) AS ukupna_kvadratura, pk.saldo FROM lice l JOIN poreskakartica pk ON pk.idl = l.idl JOIN nepokretnost n ON n.idl = l.idl GROUP BY l.imel, l.przl, pk.saldo HAVING SUM(n.kvd) < 200;
+
+//10 ?
+CREATE OR REPLACE VIEW dug_po_grupama AS SELECT grupa, SUM(dug) ukupan_dug FROM (SELECT CASE WHEN l.vrstal = 'FIZICKO' AND v.nazivvn = 'Kuca' THEN 'Fizicka lica - Kuca' WHEN l.vrstal = 'PRAVNO' AND v.nazivvn = 'Poslovni prostor' THEN 'Pravna lica - Poslovni prostor' WHEN l.vrstal = 'FIZICKO' AND n.idl IS NULL THEN 'Fizicka lica - Bez nepokretnosti' END AS grupa, pk.dug FROM lice l LEFT JOIN nepokretnost n ON l.idl = n.idl LEFT JOIN vrstanep v ON n.idvn = v.idvn LEFT JOIN poreskakartica pk ON l.idl = pk.idl) GROUP BY grupa; SELECT * FROM dug_po_grupama WHERE ukupan_dug > (SELECT AVG(dug) FROM poreskakartica);
